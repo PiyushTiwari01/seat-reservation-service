@@ -24,9 +24,60 @@ from .observability import log_event, request_id_from
 from .schemas import CancelResponse, CreateShowRequest, ReserveRequest
 
 app = FastAPI(
-    title="Seat Reservation at Scale",
+    title="Seat Reservation Service",
+    description=(
+        "Production-oriented, concurrency-safe seat reservation backend "
+        "with PostgreSQL persistence, idempotency, per-user limits, "
+        "Prometheus metrics, and Docker-ready deployment."
+    ),
     version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
+
+@app.get("/", include_in_schema=False)
+def service_root():
+    return {
+        "service": "Seat Reservation Service",
+        "version": "1.0.0",
+        "status": "operational",
+        "description": "Concurrency-safe seat reservation backend",
+        "documentation": "/docs",
+        "health": {
+            "live": "/health/live",
+            "ready": "/health/ready",
+        },
+        "observability": {
+            "metrics": "/metrics",
+        },
+    }
+
+@app.get("/api/v1", tags=["service"])
+def api_overview():
+    return {
+        "service": "Seat Reservation Service",
+        "version": "1.0.0",
+        "features": [
+            "Concurrency-safe reservations",
+            "Idempotency protection",
+            "Per-user reservation limits",
+            "Seat cancellation",
+            "PostgreSQL persistence",
+            "Prometheus metrics",
+            "Request correlation IDs",
+        ],
+        "endpoints": {
+            "create_show": "POST /shows",
+            "show_status": "GET /shows/{show_id}",
+            "reserve": "POST /shows/{show_id}/reserve",
+            "cancel": "POST /reservations/{reservation_id}/cancel",
+            "liveness": "GET /health/live",
+            "readiness": "GET /health/ready",
+            "metrics": "GET /metrics",
+            "docs": "GET /docs",
+        },
+    }
 
 Base.metadata.create_all(bind=engine)
 
@@ -474,3 +525,4 @@ def cancel_reservation(
         "reservation_id": reservation.id,
         "status": "cancelled",
     }
+
