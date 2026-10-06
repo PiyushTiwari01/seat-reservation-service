@@ -376,6 +376,18 @@ def reserve(
 
             raise HTTPException(status_code=409, detail="Idempotency conflict")
 
+
+        available = (
+    db.query(Seat)
+    .filter(
+        Seat.show_id == show_id,
+        Seat.status == "available",
+    )
+    .count()
+)
+
+        seats_available.set(available)
+
         reservations_confirmed.inc()
 
         response = reservation_response(db, reservation)
@@ -438,6 +450,8 @@ def cancel_reservation(
             seat.reservation_id = None
 
     db.commit()
+
+    
 
     available = (
         db.query(Seat)
